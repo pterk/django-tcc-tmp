@@ -2,13 +2,16 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 
+from tcc.utils import process_comment, admin_callback
+
 COMMENT_MAX_LENGTH = getattr(settings,'COMMENT_MAX_LENGTH',3000)
 MODERATED = getattr(settings, 'TCC_MODERATE', False)
 MAX_DEPTH = getattr(settings, 'TCC_MAX_DEPTH', 2)
 REPLY_LIMIT = getattr(settings, 'TCC_REPLY_LIMIT', 3)
 STEPLEN = getattr(settings, 'TCC_STEPLEN', 13)
-# ALSO SEE CONTENT_TYPES below
 TCC_CONTENT_TYPES = getattr(settings, 'TCC_CONTENT_TYPES', [])
+PRE_SAVE_CALLBACK = getattr(settings, 'TCC_PRE_SAVE_CALLBACK', process_comment)
+ADMIN_CALLBACK = getattr(settings, 'TCC_ADMIN_CALLBACK', admin_callback)
 CONTENT_TYPES = []
 
 if connection.introspection.table_names() != []:

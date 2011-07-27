@@ -32,10 +32,10 @@
   {% elif levels == prevs %}
   </li>
   {% else %}
-    {% for x in prevs[lvl:-1] %}
+    {% for x in prevs[lvl:-1] %}{{ x }}
     </ul>
-    <a style="display:none" class="showall" href="{% url tcc_thread prev.parent.id %}" title="{% trans %}Show all{% endtrans %}">
-      {% trans %}Show all{% endtrans %}</a>
+    {% if prev.parent.childcount > 3 %}<a class="showall" href="{% url tcc_thread prev.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+      {% trans %}Show all{% endtrans %}</a>{% endif %}
    </li>
     {% endfor %}
    {% endif %}
@@ -50,8 +50,8 @@
   {% else %}
   {% for _ in levels[1:] %}
     </ul>
-    <a class="showall" href="{% url tcc_thread c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
-      {% trans %}Show all{% endtrans %}</a>
+    {% if c.parent.childcount > 3 %}<a class="showall" href="{% url tcc_thread c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+      {% trans %}Show all{% endtrans %}</a>{% endif %}
   </li>
   {% endfor %}
   {% endif %}

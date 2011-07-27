@@ -11,8 +11,9 @@ from django.utils.http import base36_to_int, int_to_base36
 from django.utils.translation import ugettext_lazy as _
 
 from tcc import tasks
-from tcc.settings import (STEPLEN, COMMENT_MAX_LENGTH, MODERATED, 
-                             REPLY_LIMIT, CONTENT_TYPES, MAX_DEPTH)
+from tcc.settings import (STEPLEN, COMMENT_MAX_LENGTH, MODERATED,
+                          REPLY_LIMIT, CONTENT_TYPES, MAX_DEPTH,
+                          PRE_SAVE_CALLBACK, ADMIN_CALLBACK)
 from tcc.managers import (
     CurrentCommentManager, LimitedCurrentCommentManager,
     RemovedCommentManager, DisapprovedCommentManager,
@@ -58,6 +59,7 @@ class Comment(models.Model):
     submit_date = models.DateTimeField(_('Date'), default=datetime.now)
     # Protip: Use postgres...
     comment = models.TextField(_('Comment'), max_length=COMMENT_MAX_LENGTH)
+    comment_raw = models.TextField(_('Raw Comment'), max_length=COMMENT_MAX_LENGTH)
     # still accepting replies?
     is_open = models.BooleanField(_('Open'), default=True)
     is_removed = models.BooleanField(_('Removed'), default=False)
@@ -68,6 +70,8 @@ class Comment(models.Model):
     path = models.CharField(_('Path'), max_length=MAX_DEPTH*STEPLEN)
     limit = models.DateTimeField(
         _('Show replies from'), null=True, blank=True)
+    # denormalized cache
+    childcount = models.IntegerField(_('Reply count'), default=0)
 
     unfiltered = models.Manager()
     objects = CurrentCommentManager()
@@ -143,18 +147,12 @@ class Comment(models.Model):
             if self.has_changed('is_removed'):
                 self.get_replies().update(is_removed=False)
 
-            # If you cannot rely on the id remaining the same
-            # uncomment the next lines
-
-            # if self.has_changed('id'):
-            #    self._set_path()
-            #    for r in self.get_replies():
-            #        r._set_path()
-
-            # if is_deleted needs to cascade uncomment this:
         else:
             must_set_path = True
             must_send_notifications = True
+            
+            self.comment_raw = self.comment
+            self.comment = PRE_SAVE_CALLBACK(self.comment)
 
         super(Comment, self).save(*args, **kwargs)
 
@@ -178,7 +176,8 @@ class Comment(models.Model):
 
     def set_limit(self):
         replies = self.get_replies(levels=1).order_by('-submit_date')
-        n = replies.count() 
+        n = replies.count()
+        self.childcount = n
         if n == 0:
             return
         if n < REPLY_LIMIT:
@@ -206,7 +205,7 @@ class Comment(models.Model):
         return self.user == user
 
     def can_remove(self, user):
-        return self.user == user
+        return self.user == user or user in self.get_enabled_users('remove')
 
     def can_restore(self, user):
         return self.user == user
@@ -231,3 +230,9 @@ class Comment(models.Model):
         else:
             self.path = "%s" % (self.get_base36().zfill(STEPLEN))
         self.save()
+    
+    def get_enabled_users(self, action):
+        assert action in ['open', 'close', 'remove', 'restore',
+                          'approve', 'disapprove']
+        return ADMIN_CALLBACK(self, action)
+

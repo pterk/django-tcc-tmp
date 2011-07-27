@@ -2,7 +2,7 @@
   <a name="{{ c.get_base36() }}" href="{% url profiles_profile_detail c.user.username %}" rel="nofollow">
     <img width="{% if c.parent %}40{% else %}50{% endif %}" src="http://e.fashiocdn.com/images/no-image.50x50.png" alt="{{ c.user.username }}">
   </a>
-  <p>{{ c.comment }}</p>
+  <p>{{ c.comment|safe }}</p>
   <p class="info">
     {% trans %}by{% endtrans %} <a href="#">{{ c.user }}</a>
     | {{ c.submit_date|date("Y-m-d H:i") }}
@@ -12,7 +12,7 @@
       | <a id="post-{{ c.id }}" href="#" title="{% trans %}reply{% endtrans %}">{% trans %}reply{% endtrans %}</a>
     </span>
     {% endif %}
-    <span class="comment-remove comment-remove-{{ c.user.id }}" style="display:none">
+    <span class="comment-remove comment-remove-{{ c.user.id }}{% for u in c.get_enabled_users('remove') %} comment-remove-{{ u.id }}{% endfor %}" style="display:none">
       | <a href="{% url tcc_remove c.id %}" title="{% trans %}remove{% endtrans %}">{% trans %}remove{% endtrans %}</a>
     </span>
   </p>

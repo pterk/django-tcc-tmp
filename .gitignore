@@ -3,3 +3,4 @@
 /TODO
 /docs/_build
 cleanup.sh
+/tcc.egg-info/*

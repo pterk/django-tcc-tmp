@@ -56,6 +56,7 @@
                         frm.remove();
                         parent.remove();
                     });
+                    return false;
                 });
                 frm.css({'display': 'block'});
                 parent.append(frm);

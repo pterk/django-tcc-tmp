@@ -48,7 +48,7 @@
   {% if lvl ==  0 %}
   </li>
   {% else %}
-  {% for _ in levels[1:] %}{{ _ }}
+  {% for _ in levels[1:] %}
     </ul>
     <a class="showall" href="{% url tcc_thread c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
       {% trans %}Show all{% endtrans %}</a>

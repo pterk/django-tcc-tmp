@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}tcc/js/jquery.tcc.js"></script>
+<link rel="stylesheet" href="{{ STATIC_URL }}tcc/css/tcc.css" media="screen">
+{{ form.media }}
+{% endblock %}

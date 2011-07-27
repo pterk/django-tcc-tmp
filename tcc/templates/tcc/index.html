@@ -1,0 +1,16 @@
+{% extends 'tcc/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<h1>Discussion</h1>
+{% include "tcc/list-comments.html" %}
+<script type="text/javascript">
+  $(document).ready(function(){
+  {% if user.is_authenticated %}
+  $(document).tcc({user_id: {{ user.id }}});
+  {% else %}
+  $(document).tcc();
+  {% endif %}
+  });
+</script>
+{% endblock %}

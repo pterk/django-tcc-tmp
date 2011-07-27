@@ -1,0 +1,31 @@
+{% load i18n pagination_tags %}
+<ul id="tcc">
+
+  {% if user.is_authenticated %}
+  <p>{% trans "Your comment" %}</p>
+  <form action="{% url tcc_post %}" method="post">
+    {% csrf_token %}
+    {% for fld in form %}{{ fld }}{% endfor %}
+    <div>
+      <input type="submit" name="some_name" value="{% trans "Save" %}">
+      <a style="display:none" class="reply-form" href="#" title="{% trans "Cancel" %}">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+  {% else %}
+  <p>Please <a href="{% url auth_login %}">log in</a> to share your opinion.</p>
+  {% endif %}
+  
+  {% autopaginate comments 10 %}
+  {% for c in comments %}
+  
+  {% include 'tcc/comment.html' %}
+
+  {% endfor %}
+  <form style="display:none" class="remove-form" action="" method="post">
+    {% csrf_token %}
+    {% trans "Are you sure you want to delete this comment?" %}
+    <input type="submit" name="remove-submit" value="{% trans "Yes" %}">
+    <a class="remove-cancel" href="#">{% trans "Cancel" %}
+  </form>
+</ul>
+{% paginate %}

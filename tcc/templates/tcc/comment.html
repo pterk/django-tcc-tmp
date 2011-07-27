@@ -1,0 +1,13 @@
+{% load i18n %}
+<li class="comment user-{{ c.user_id }}">
+  <p>{{ c.comment }}</p>
+  <p class="info">
+    {% trans "by" %} <a href="#">{{ c.user }}</a>
+    | {{ c.submit_date|date:"Y-m-d H:i" }}
+    {% if perms.tcc.remove_comment or c.user == user %}
+    <span class="comment-remove comment-remove-{{ c.user.id }}">
+      | <a href="{% url tcc_remove c.id %}" title="{% trans "remove" %}">{% trans "remove" %}</a>
+    </span>
+    {% endif %}
+  </p>
+</li>

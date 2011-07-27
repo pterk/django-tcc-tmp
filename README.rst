@@ -1,1 +1,1 @@
-A demo project for tcc
+A django comments app.

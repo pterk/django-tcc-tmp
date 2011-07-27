@@ -1,4 +1,4 @@
-ul#tcc, #tcc ul, #tcc li {
+ul, li {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -8,7 +8,19 @@ ul#tcc, #tcc ul, #tcc li {
     margin-bottom: 1em;
     margin-top: 10px;
     padding-top: 10px;
+    padding-left: 75px;
     position: relative;
+    min-height: 48px;
+}
+
+#tcc .replies li {
+    background-color: #fafafa;
+    margin-top: .5em;
+    padding: 10px 0 4px 60px;
+}
+
+#tcc .comment {
+    border-top: 1px solid #eee;
 }
 
 #tcc .comment p {
@@ -21,6 +33,7 @@ ul#tcc, #tcc ul, #tcc li {
     left: 10px;
     top: 10px;
 }
+
 
 #tcc .comment-remove, #tcc .comment-reply {
     display: none;
@@ -40,3 +53,6 @@ ul#tcc, #tcc ul, #tcc li {
     font-weight: bold;
     margin: 1em 0;
 }
+
+
+

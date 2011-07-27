@@ -1,31 +1,79 @@
-{% load i18n pagination_tags %}
 <ul id="tcc">
-
-  {% if user.is_authenticated %}
-  <p>{% trans "Your comment" %}</p>
+  {% if user.is_authenticated() %}
   <form action="{% url tcc_post %}" method="post">
     {% csrf_token %}
-    {% for fld in form %}{{ fld }}{% endfor %}
+    {% for fld in form %}{{ fld.as_widget() }}{% endfor %}
     <div>
-      <input type="submit" name="some_name" value="{% trans "Save" %}">
-      <a style="display:none" class="reply-form" href="#" title="{% trans "Cancel" %}">{% trans "Cancel" %}</a>
+      <input type="submit" name="some_name" value="{% trans %}Save{% endtrans %}">
+      <a style="display:none" class="reply-form" href="#" title="{% trans %}Cancel{% endtrans %}">{% trans %}Cancel{% endtrans %}</a>
     </div>
   </form>
   {% else %}
-  <p>Please <a href="{% url auth_login %}">log in</a> to share your opinion.</p>
+  <p>Please <a href="{% url auth_login %}">log in</a> to share your insights</p>
   {% endif %}
-  
-  {% autopaginate comments 10 %}
+
+  {% set levels = [0] %}
+  {% set prev = None %}
+
   {% for c in comments %}
-  
+
+  {# administration #}
+  {% set prevs = levels %}
+  {% set lvl = c.get_depth() %}
+  {% if c.parent %}
+    {% set levels = levels[:lvl] + [lvl] %}
+   {% else %}
+    {% set levels = [0] %}
+  {% endif %}
+
+  {# opening / closing of uls and li's #}
+  {% if levels > prevs %}
+    <ul class="replies">
+  {% elif levels == prevs %}
+  </li>
+  {% else %}
+    {% for x in prevs[lvl:-1] %}
+    </ul>
+    <a style="display:none" class="showall" href="{% url tcc_thread prev.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+      {% trans %}Show all{% endtrans %}</a>
+   </li>
+    {% endfor %}
+   {% endif %}
+
+  {% set doclose = true %}
   {% include 'tcc/comment.html' %}
 
+  {# close the last li (and / or uls) #}
+  {% if loop.last %}
+  {% if lvl ==  0 %}
+  </li>
+  {% else %}
+  {% for _ in levels[1:] %}{{ _ }}
+    </ul>
+    <a class="showall" href="{% url tcc_thread c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+      {% trans %}Show all{% endtrans %}</a>
+  </li>
   {% endfor %}
-  <form style="display:none" class="remove-form" action="" method="post">
+  {% endif %}
+  {% endif %}
+
+  {% set prev = c %}
+  {% endfor %}
+
+  <form class="remove-form" action="" method="post" style="display:none">
     {% csrf_token %}
-    {% trans "Are you sure you want to delete this comment?" %}
-    <input type="submit" name="remove-submit" value="{% trans "Yes" %}">
-    <a class="remove-cancel" href="#">{% trans "Cancel" %}
+    {% trans %}Are you sure you want to delete this comment?{% endtrans %}
+    <input type="submit" name="remove-submit" value="{% trans %}Yes{% endtrans %}">
+    <a class="remove-cancel" href="#">{% trans %}Cancel{% endtrans %}
   </form>
 </ul>
-{% paginate %}
+
+<script type="text/javascript">
+  $(document).ready(function(){
+  {% if user.is_authenticated %}
+  $(document).tcc({user_id: {{ user.id }}});
+  {% else %}
+  $(document).tcc();
+  {% endif %}
+  });
+</script>

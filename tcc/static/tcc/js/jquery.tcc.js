@@ -39,17 +39,7 @@
       return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
     }
 
-    function init(){
-        $('a.showall').click(function(){
-            var parent = $(this).parent();
-            var ul = $('ul.replies', parent).first();
-            $.get($(this).attr('href'), function(data){
-                $(ul).html(data);
-            });
-            $(this).remove();
-            return false;
-        });
-
+    function apply_hooks(){
         if(opts.user_id){
             $('.comment-remove-'+opts.user_id).css({'display': 'inline'});
             $('.comment-remove').click(function(){
@@ -63,6 +53,7 @@
                 });
                 frm.submit(function(){
                     $.post(action, $(this).serialize(), function(){
+                        frm.remove();
                         parent.remove();
                     });
                 });
@@ -71,20 +62,6 @@
                 return false;
             });
 
-            var frm = $('#tcc form').first();
-            $(frm).submit(function(){
-                $.post($(this).attr('action'), $(this).serialize(), function(data){
-                    $('ul#tcc').append(data);
-                    $('#id_comment', frm).val('');
-                    var latest = $('ul#tcc li.comment').last();
-                    $(document).tcc(opts);
-                    if(!isScrolledIntoView(latest)){
-                        $(document).scrollTop($(latest).offset().top-300);
-                    }
-                });
-                return false;
-            });
-            
             $('.comment-reply').css({'display': 'inline'});
             $('.comment-reply').click(function(){
                 var parent = $(this).parent().parent();
@@ -93,10 +70,10 @@
                 $('#id_parent', frm).val($('a', this).attr('id').slice(5));
                 $(frm).submit(function(){
                     $.post($(this).attr('action'), $(this).serialize(), function(comment){
-                        $(frm).remove();
+                        frm.remove();
                         if($('ul.replies', parent).length == 0){ $(parent).append('<ul class="replies"/>');}
-                        $('ul.replies', parent).append(data);
-                        $(document).tcc(opts);
+                        $('ul.replies', parent).append(comment);
+                        apply_hooks();
                     });
                     return false;
                 });
@@ -104,9 +81,44 @@
                 if(!isScrolledIntoView(frm)){
                     $(document).scrollTop($(frm).offset().top-300);
                 }
+                $('#id_comment', frm).focus();
                 return false;
             });
         }
+    }
+
+    function init(){
+        // showall is enable for everyone
+        $('a.showall').click(function(){
+            var parent = $(this).parent();
+            var ul = $('ul.replies', parent).first();
+            $.get($(this).attr('href'), function(data){
+                $(ul).html(data);
+            });
+            $(this).remove();
+            return false;
+        });
+
+
+        if ( opts.user_id ) {
+            apply_hooks();
+            // run this only once
+            var frm = $('#tcc form').first();
+            $(frm).submit(function(){
+                $.post($(this).attr('action'), $(this).serialize(), function(data){
+                    $('ul#tcc').append(data);
+                    apply_hooks();
+                    $('#id_comment', frm).val('');
+                    var latest = $('ul#tcc li.comment').last();
+                    if(!isScrolledIntoView(latest)){
+                        $(document).scrollTop($(latest).offset().top-300);
+                    }
+                    
+                });
+                return false;
+            });
+        }
+
     }
 
 })(jQuery);

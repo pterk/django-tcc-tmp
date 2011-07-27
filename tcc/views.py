@@ -14,6 +14,14 @@ from tcc import api
 from tcc.settings import CONTENT_TYPES
 from tcc.forms import CommentForm
 
+# jinja
+from coffin.shortcuts import render_to_response
+'''Monkeypatch Django to mimic Jinja2 behaviour'''
+from django.utils import safestring
+if not hasattr(safestring, '__html__'):
+    safestring.SafeString.__html__ = lambda self: str(self)
+    safestring.SafeUnicode.__html__ = lambda self: unicode(self)
+
 
 def _get_tcc_index(comment):
     return reverse('tcc_index', 
@@ -35,7 +43,8 @@ def index(request, content_type_id, object_pk):
     form = CommentForm(target, initial=initial)
     context = {'comments': comments,
             'form': form}
-    return render(request, 'tcc/index.html', context)
+    context = RequestContext(request, context)
+    return render_to_response('tcc/index.html', context)
 
 
 def thread(request, parent_id):
@@ -74,9 +83,13 @@ def post(request):
                                    parent_id=parent_id)
         if comment:
             if request.is_ajax():
-                return render(request, 'tcc/comment.html', {'c': comment})
-            next = form.cleaned_data.get('next', comment.get_absolute_url())
+                context = RequestContext(request, {'c': comment})
+                return render_to_response('tcc/comment.html', context)
+            next = form.cleaned_data['next']
+            if not next:
+                next = comment.get_absolute_url()
             return HttpResponseRedirect(next)
+    # ignore?
     return HttpResponseRedirect(
         reverse('tcc_index', args=[content_type_id, object_pk]))
 

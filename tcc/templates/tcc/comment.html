@@ -1,13 +1,26 @@
-{% load i18n %}
 <li class="comment user-{{ c.user_id }}">
+  <a name="{{ c.get_base36() }}" href="{% url profiles_profile_detail c.user.username %}" rel="nofollow">
+    <img width="{% if c.parent %}40{% else %}50{% endif %}" src="http://e.fashiocdn.com/images/no-image.50x50.png" alt="{{ c.user.username }}">
+  </a>
   <p>{{ c.comment }}</p>
   <p class="info">
-    {% trans "by" %} <a href="#">{{ c.user }}</a>
-    | {{ c.submit_date|date:"Y-m-d H:i" }}
-    {% if perms.tcc.remove_comment or c.user == user %}
-    <span class="comment-remove comment-remove-{{ c.user.id }}">
-      | <a href="{% url tcc_remove c.id %}" title="{% trans "remove" %}">{% trans "remove" %}</a>
+    {% trans %}by{% endtrans %} <a href="#">{{ c.user }}</a>
+    | {{ c.submit_date|date("Y-m-d H:i") }}
+    {% if c.reply_allowed() %}
+    {# todo : fallback for no js #}
+    <span class="comment-reply" style="display:none">
+      | <a id="post-{{ c.id }}" href="#" title="{% trans %}reply{% endtrans %}">{% trans %}reply{% endtrans %}</a>
     </span>
     {% endif %}
+    <span class="comment-remove comment-remove-{{ c.user.id }}" style="display:none">
+      | <a href="{% url tcc_remove c.id %}" title="{% trans %}remove{% endtrans %}">{% trans %}remove{% endtrans %}</a>
+    </span>
   </p>
+  {#
+  The following construction will close the li if doclose is NOT set (a reasonable default)
+
+  It will leave the li 'open' though if doclose is set to something truthy which is what is needed list-comments.html
+  #}
+  {% if not doclose %}
 </li>
+{% endif %}

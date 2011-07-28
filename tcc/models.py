@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.http import base36_to_int, int_to_base36
@@ -13,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from tcc import tasks
 from tcc.settings import (STEPLEN, COMMENT_MAX_LENGTH, MODERATED,
                           REPLY_LIMIT, CONTENT_TYPES, MAX_DEPTH,
-                          PRE_SAVE_CALLBACK, ADMIN_CALLBACK)
+                          PRE_SAVE_CALLBACK, ADMIN_CALLBACK, MAX_REPLIES)
 from tcc.managers import (
     CurrentCommentManager, LimitedCurrentCommentManager,
     RemovedCommentManager, DisapprovedCommentManager,
@@ -39,6 +40,10 @@ class Comment(models.Model):
     """ A comment table, aimed to be compatible with django.contrib.comments
 
     """
+    # constants
+    MAX_REPLIES = MAX_REPLIES
+    REPLY_LIMIT = REPLY_LIMIT
+
     # From comments BaseCommentAbstractModel
     content_type = models.ForeignKey(
         ContentType, verbose_name=_('content type'),
@@ -91,6 +96,11 @@ class Comment(models.Model):
         link = reverse('tcc_index',
                        args=(self.content_type.id, self.object_pk))
         return "%s#%s" % (link, self.get_base36())
+
+    def clean(self):
+        if self.parent:
+            if not self.pk and self.parent.childcount >= self.MAX_REPLIES:
+                raise ValidationError(_('Maximum number of replies reached'))
 
     def get_root_path(self):
         return self.path[0:STEPLEN]
@@ -191,7 +201,8 @@ class Comment(models.Model):
         return ( len(self.path) / STEPLEN ) - 1
 
     def reply_allowed(self):
-        return self.is_open and ( self.depth < MAX_DEPTH - 1 )
+        return self.is_open and self.childcount < self.MAX_REPLIES \
+            and ( self.depth < MAX_DEPTH - 1 )
 
     def can_open(self, user):
         return self.user == user

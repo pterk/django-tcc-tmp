@@ -167,6 +167,7 @@
             var ul = $('ul.replies', parent).first();
             $.get($(this).attr('href'), function(data){
                 $(ul).html(data);
+                apply_hooks();
             });
             $(this).remove();
             return false;

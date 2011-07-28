@@ -1,6 +1,9 @@
 import string
+from urlparse import urlparse
 
 from django.contrib.auth.models import User
+from django.core.urlresolvers import resolve, reverse
+from django.http import Http404
 from django.template.defaultfilters import linebreaks
 from django.utils.safestring import SafeData, mark_safe
 from django.utils.encoding import force_unicode
@@ -23,7 +26,8 @@ def is_acceptable(url, acceptable_urls, force_prepend=True):
     return False
 
 
-def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False, acceptable_urls=[]):
+def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False,
+           acceptable_urls=[], callback=None):
     """
     Converts any URLs in text into clickable links.
 
@@ -68,12 +72,20 @@ def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False, acceptab
                 nofollow_attr = ''
             # Make link.
             if url and is_acceptable(url, acceptable_urls):
-                trimmed = trim_url(middle)
-                if autoescape and not safe_input:
-                    lead, trail = escape(lead), escape(trail)
-                    url, trimmed = escape(url), escape(trimmed)
-                middle = '<a href="%s"%s>%s</a>' % (url, nofollow_attr, trimmed)
-                words[i] = mark_safe('%s%s%s' % (lead, middle, trail))
+                cbburl = None
+                if callback:
+                    cburl = callback(url)
+                if cburl:
+                    if autoescape and not safe_input:
+                        lead, trail = escape(lead), escape(trail)
+                    words[i] = mark_safe('%s%s%s' % (lead, cburl, trail))
+                else:
+                    trimmed = trim_url(middle)
+                    if autoescape and not safe_input:
+                        lead, trail = escape(lead), escape(trail)
+                        url, trimmed = escape(url), escape(trimmed)
+                    middle = '<a href="%s"%s>%s</a>' % (url, nofollow_attr, trimmed)
+                    words[i] = mark_safe('%s%s%s' % (lead, middle, trail))
             else:
                 if safe_input:
                     words[i] = mark_safe(word)
@@ -87,12 +99,27 @@ def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False, acceptab
 urlize = allow_lazy(urlize, unicode)
 
 
+def iconify(url, url_names=['fashiolista_item']):
+    parts = urlparse(url)
+    urlpath = parts.path
+    try:
+        match = resolve(urlpath)
+    except Http404:
+        return None
+    print match
+    if match.url_name in url_names:
+        return '<a href="%s?match=%s" title="%s">%s</a>' % (
+            reverse(match.url_name, args=match.args, kwargs=match.kwargs),
+            match.url_name, match.url_name, match.url_name)
+
+
 def process_comment(comment):
     comment = bleach.clean(
         comment, tags=[], attributes=[], styles=[], strip=True)
     return linebreaks(
         urlize(comment, 
-               acceptable_urls=['fashiolista.com', 'www.fashiolista.com']))
+               acceptable_urls=['fashiolista.com', 'www.fashiolista.com'],
+               callback=iconify))
 
 
 def admin_callback(comment, action):

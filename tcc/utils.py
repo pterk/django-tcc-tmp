@@ -106,7 +106,6 @@ def iconify(url, url_names=['fashiolista_item']):
         match = resolve(urlpath)
     except Http404:
         return None
-    print match
     if match.url_name in url_names:
         return '<a href="%s?match=%s" title="%s">%s</a>' % (
             reverse(match.url_name, args=match.args, kwargs=match.kwargs),

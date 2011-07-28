@@ -105,10 +105,10 @@ class API(TestCase):
         pk = self.user1.pk
         p = api.post_comment(content_type_id=ct.id, object_pk=pk,
                              user_id=pk, comment="Root message")
-        self.assertEqual(p.path,  u'0000000000001')
+        self.assertEqual(p.path,  u'1'.zfill(settings.STEPLEN))
         c = api.post_comment(content_type_id=ct.id, object_pk=pk,
                              user_id=pk, comment="Reply", parent_id=p.id)
-        self.assertEqual(c.path,  u'00000000000010000000000002')
+        self.assertEqual(c.path,  u'1'.zfill(settings.STEPLEN)+u'2'.zfill(settings.STEPLEN))
         self.assertEqual(c.get_parents()[0].id, p.id)
         self.assertEqual(len(p.get_parents()), 0)
         self.assertEqual(p.get_replies()[0].id, c.id)
@@ -129,9 +129,9 @@ class API(TestCase):
         pk = self.user1.pk
         p = api.post_comment(content_type_id=ct.id, object_pk=pk,
                              user_id=pk, comment="Root message")
-        self.assertEqual(p.path,  u'0000000000001')
+        self.assertEqual(p.path,  u'1'.zfill(settings.STEPLEN))
         c = api.post_reply(user_id=pk, comment="Reply", parent_id=p.id)
-        self.assertEqual(c.path,  u'00000000000010000000000002')
+        self.assertEqual(c.path,  u'1'.zfill(settings.STEPLEN)+u'2'.zfill(settings.STEPLEN))
         self.assertEqual(c.get_parents()[0].id, p.id)
         self.assertEqual(p.get_replies()[0].id, c.id)
         tp = api.get_comment_thread(p.id)

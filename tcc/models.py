@@ -217,20 +217,26 @@ class Comment(models.Model):
     def _set_path(self):
         """ This will set the path to a base36 encoding of the comment-id
 
-        Since the depth is limited (to 2  by default) padding to 13 will allow for
-        plenty of space (36**13) (sufficient to base36-encode any
-        64-bit integer)
+        >>> 2**31
+        2147483648
+        >>> 2**31 / 1000 / 1000
+        2147
 
-        >>> 36**12 > 2**64
-        False
-        >>> 36**13 > 2**64
-        True
+        So 2**31 is enough for 1 million (1.000.000) comments daily for almost 6 (5.88) years 
+
+        If you really need more check out django's BigIntegerField
+
+        >>> 2**63
+        9223372036854775808L
+
         """
         if self.parent:
             self.path = "%s%s" % (self.parent.path, self.get_base36().zfill(STEPLEN))
         else:
             self.path = "%s" % (self.get_base36().zfill(STEPLEN))
+
         self.depth = self.get_depth()
+
         self.save()
     
     def get_enabled_users(self, action):

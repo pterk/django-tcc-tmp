@@ -72,6 +72,7 @@ class Comment(models.Model):
         _('Show replies from'), null=True, blank=True)
     # denormalized cache
     childcount = models.IntegerField(_('Reply count'), default=0)
+    depth = models.IntegerField(_('Depth'), default=0)
 
     unfiltered = models.Manager()
     objects = CurrentCommentManager()
@@ -102,7 +103,7 @@ class Comment(models.Model):
         return Comment.objects.filter(path__startswith=self.get_root_path())
 
     def get_replies(self, levels=None, include_self=False):
-        if self.parent and self.parent.get_depth() == MAX_DEPTH - 1:
+        if self.parent and self.parent.depth == MAX_DEPTH - 1:
             return Comment.objects.none()
         else:
             replies = Comment.objects.filter(path__startswith=self.path)
@@ -190,7 +191,7 @@ class Comment(models.Model):
         return ( len(self.path) / STEPLEN ) - 1
 
     def reply_allowed(self):
-        return self.is_open and ( self.get_depth() < MAX_DEPTH - 1 )
+        return self.is_open and ( self.depth < MAX_DEPTH - 1 )
 
     def can_open(self, user):
         return self.user == user
@@ -229,6 +230,7 @@ class Comment(models.Model):
             self.path = "%s%s" % (self.parent.path, self.get_base36().zfill(STEPLEN))
         else:
             self.path = "%s" % (self.get_base36().zfill(STEPLEN))
+        self.depth = self.get_depth()
         self.save()
     
     def get_enabled_users(self, action):

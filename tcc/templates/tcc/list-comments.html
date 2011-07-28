@@ -19,7 +19,7 @@
 
   {# administration #}
   {% set prevs = levels %}
-  {% set lvl = c.get_depth() %}
+  {% set lvl = c.depth %}
   {% if c.parent %}
     {% set levels = levels[:lvl] + [lvl] %}
    {% else %}

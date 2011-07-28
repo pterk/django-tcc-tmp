@@ -18,7 +18,7 @@ def make_tree(comments):
     levels = []
     for c in comments:
         c.replies = []
-        level = c.get_depth()
+        level = c.depth
         if c.parent:
             while len(levels) > level:
                 levels.pop() # pragma: no cover

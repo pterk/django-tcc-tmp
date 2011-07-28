@@ -56,7 +56,7 @@ class Comment(models.Model):
     user_name   = models.CharField(_("user's name"), max_length=50, blank=True)
     user_email  = models.EmailField(_("user's email address"), blank=True)
     user_url    = models.URLField(_("user's URL"), blank=True)
-    submit_date = models.DateTimeField(_('Date'), default=datetime.now)
+    submit_date = models.DateTimeField(_('Date'), default=datetime.utcnow)
     # Protip: Use postgres...
     comment = models.TextField(_('Comment'), max_length=COMMENT_MAX_LENGTH)
     comment_raw = models.TextField(_('Raw Comment'), max_length=COMMENT_MAX_LENGTH)

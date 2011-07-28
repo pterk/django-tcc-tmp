@@ -3,7 +3,9 @@
 
     // private vars (within the closure)
     var opts;
-
+    var JSMINUTE = 60*1000; // milliseconds
+    var JSHOUR = 60*JSMINUTE
+    var JSDAY = 24*JSHOUR
     //
     // plugin definition
     //
@@ -40,6 +42,76 @@
     }
 
     function apply_hooks(){
+
+        if(opts.user_name){
+            $('.c-user').filter(function(){
+                return $(this).text() == opts.user_name
+            }).text('You');
+        }
+
+        function make_local_time(dte){
+            var offset = -1 * new Date().getTimezoneOffset();
+            return new Date(dte.valueOf()+(offset*JSMINUTE));
+        }
+
+        function is_nowish(dte){
+            // This is localtime (for the browser)
+            var now = new Date();
+            return (now-dte < JSMINUTE*5);
+        }
+
+        function date_format(dte){
+            var y=dte.getYear(), m=dte.getMonth(), d=dte.getDay(),
+            h = dte.getHours(), m = dte.getMinutes(), s = dte.getSeconds();
+            if (d < 10) { d = '0' + dd; };
+            if (m < 10) { m = '0' + m; }; 
+            if (s < 10) { s = '0' + s; }; 
+            return [y,m,d].join('-')+' '+[h, m].join(':');
+        }
+
+        function days_ago(dte){
+            var now = new Date();
+            return parseInt((now-dte)/JSDAY);
+        }
+
+        $('span.c-date').not('.humanized').each(function(){
+            try {
+                var datetime = $(this).text().split(' ');
+                var dte = datetime[0].split('-');
+                var tme = datetime[1].split(':');
+                // This is a UTC time
+                dte = new Date(parseInt(dte[0]), parseInt(dte[1]) - 1, parseInt(dte[2]),
+                               parseInt(tme[0]), parseInt(tme[1]));
+                dte = make_local_time(dte);
+                var humandate = '';
+                var n = days_ago(dte);
+                switch(true){
+                case n==0:
+                    if (is_nowish(dte)) {
+                        humandate = 'Just now';
+                    } else {
+                        humandate = 'today';
+                    }
+                    break;
+                case n==1:
+                    humandate = 'yesterday';
+                    break;
+                case n >1 && n < 7:
+                    humandate = n + ' days ago';
+                    break;
+                case n > 6 && n < 15:
+                    humandate = 'last week';
+                    break;
+                default:
+                    humandate = date_format(dte);
+                }
+                $(this).text(humandate);
+                $(this).addClass('humanized');
+            } catch (e) {
+                // pass
+            }
+        });
+
         if(opts.user_id){
             $('.comment-remove-'+opts.user_id).css({'display': 'inline'});
             $('.comment-remove').click(function(){

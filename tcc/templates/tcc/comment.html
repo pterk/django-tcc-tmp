@@ -4,8 +4,8 @@
   </a>
   {{ c.comment|safe }}
   <p class="info">
-    {% trans %}by{% endtrans %} <a href="#">{{ c.user }}</a>
-    | {{ c.submit_date|date("Y-m-d H:i") }}
+    {% trans %}by{% endtrans %} <a class="c-user" href="#">{{ c.user }}</a>
+    | <span class="c-date">{{ c.submit_date|date("Y-m-d H:i") }}</span>
     {% if c.reply_allowed() %}
     {# todo : fallback for no js #}
     <span class="comment-reply" style="display:none">

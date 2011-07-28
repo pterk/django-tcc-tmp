@@ -2,7 +2,7 @@
   <a name="{{ c.get_base36() }}" href="{% url profiles_profile_detail c.user.username %}" rel="nofollow">
     <img width="{% if c.parent %}40{% else %}50{% endif %}" src="http://e.fashiocdn.com/images/no-image.50x50.png" alt="{{ c.user.username }}">
   </a>
-  <p>{{ c.comment|safe }}</p>
+  {{ c.comment|safe }}
   <p class="info">
     {% trans %}by{% endtrans %} <a href="#">{{ c.user }}</a>
     | {{ c.submit_date|date("Y-m-d H:i") }}

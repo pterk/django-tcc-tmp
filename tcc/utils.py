@@ -1,6 +1,7 @@
 import string
 
 from django.contrib.auth.models import User
+from django.template.defaultfilters import linebreaks
 from django.utils.safestring import SafeData, mark_safe
 from django.utils.encoding import force_unicode
 from django.utils.functional import allow_lazy
@@ -87,12 +88,15 @@ urlize = allow_lazy(urlize, unicode)
 
 
 def process_comment(comment):
-    comment = bleach.clean(comment, tags=[], attributes=[], styles=[], strip=True)
-    return urlize(comment, acceptable_urls=['fashiolista.com', 'www.fashiolista.com'])
+    comment = bleach.clean(
+        comment, tags=[], attributes=[], styles=[], strip=True)
+    return linebreaks(
+        urlize(comment, 
+               acceptable_urls=['fashiolista.com', 'www.fashiolista.com']))
 
 
 def admin_callback(comment, action):
-    """ Callback to list the users that have permissions for <action> on <comment>
+    """ Callback to list users that have permissions for <action> on <comment>
 
     The comment object is passed and the 'action' to be taken which is one of:
     

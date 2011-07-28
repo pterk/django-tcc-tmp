@@ -34,7 +34,7 @@
   {% else %}
     {% for x in prevs[lvl:-1] %}
     </ul>
-    {% if prev.parent.childcount > 3 %}<a class="showall" href="{% url tcc_thread prev.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+    {% if prev.parent.childcount > c.REPLY_LIMIT %}<a class="showall" href="{% url tcc_replies prev.parent.id %}" title="{% trans %}Show all{% endtrans %}">
       {% trans %}Show all{% endtrans %}</a>{% endif %}
    </li>
     {% endfor %}
@@ -50,7 +50,7 @@
   {% else %}
   {% for _ in levels[1:] %}
     </ul>
-    {% if c.parent.childcount > 3 %}<a class="showall" href="{% url tcc_thread c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
+    {% if c.parent.childcount > c.REPLY_LIMIT %}<a class="showall" href="{% url tcc_replies c.parent.id %}" title="{% trans %}Show all{% endtrans %}">
       {% trans %}Show all{% endtrans %}</a>{% endif %}
   </li>
   {% endfor %}

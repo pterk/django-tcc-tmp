@@ -24,51 +24,55 @@ if not hasattr(safestring, '__html__'):
 
 
 def _get_tcc_index(comment):
-    return reverse('tcc_index', 
+    return reverse('tcc_index',
                    args=[comment.content_type_id, comment.object_pk])
 
 
-def index(request, content_type_id, object_pk):
-    if int(content_type_id) not in CONTENT_TYPES:
+def _get_comment_form(content_type_id, object_pk, data=None):
+    if not content_type_id or int(content_type_id) not in CONTENT_TYPES:
         raise Http404()
-    # extra checks... comment next 5 lines out to save 2 queries
-    ct = get_object_or_404(ContentType, id=content_type_id)
+    ct = get_object_or_404(ContentType, pk=content_type_id)
     try:
         target = ct.get_object_for_this_type(pk=object_pk)
     except ObjectDoesNotExist:
         raise Http404()
+    initial = {'content_type': ct.id, 'object_pk': object_pk}
+    form = CommentForm(target, data, initial=initial)
+    return form
+
+
+def index(request, content_type_id, object_pk):
     comments = api.get_comments_limited(content_type_id, object_pk)
-    initial = {'content_type': content_type_id,
-               'object_pk': object_pk}
-    form = CommentForm(target, initial=initial)
-    context = {'comments': comments,
-            'form': form}
-    context = RequestContext(request, context)
+    form = _get_comment_form(content_type_id, object_pk)
+    context = RequestContext(request, {'comments': comments, 'form': form })
     return render_to_response('tcc/index.html', context)
 
 
-def thread(request, parent_id):
+def replies(request, parent_id):
     comments = api.get_comment_replies(parent_id)
     context = RequestContext(request, {'comments': comments})
     return render_to_response('tcc/thread.html', context)
+
+
+def thread(request, comment_id):
+    comments = api.get_comment_thread(comment_id)
+    if not comments:
+        raise Http404()
+    rootcomment = comments[0]
+    form = _get_comment_form(rootcomment.content_type_id, rootcomment.object_pk)
+    context = RequestContext(request, {'comments': comments, 'form': form})
+    return render_to_response('tcc/index.html', context)
 
 
 @login_required
 @require_POST
 def post(request):
     data = request.POST.copy()
-    content_type = data.get('content_type', None)
-    if int(content_type) not in CONTENT_TYPES:
-        raise Http404()
-    ct = get_object_or_404(ContentType, pk=content_type)
+    content_type_id = data.get('content_type', None)
     object_pk = data.get('object_pk', None)
-    try:
-        target = ct.get_object_for_this_type(pk=object_pk)
-    except ObjectDoesNotExist:
-        raise Http404()
     # inject the user
     data['user'] = request.user.id
-    form = CommentForm(target, data)
+    form = _get_comment_form(content_type_id, object_pk, data)
     if form.is_valid():
         parent = form.cleaned_data.get('parent', None)
         if parent:
@@ -76,7 +80,7 @@ def post(request):
         else:
             parent_id = None
         message = form.cleaned_data.get('comment', '')
-        comment = api.post_comment(content_type_id=content_type,
+        comment = api.post_comment(content_type_id=content_type_id,
                                    object_pk=object_pk,
                                    user_id=request.user.id,
                                    comment=message,

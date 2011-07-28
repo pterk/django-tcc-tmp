@@ -4,3 +4,5 @@
 /docs/_build
 cleanup.sh
 /tcc.egg-info/*
+/tcc/locale/*/*/*.mo
+

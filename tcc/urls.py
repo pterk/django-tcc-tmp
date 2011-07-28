@@ -16,4 +16,10 @@ urlpatterns = patterns(
         name='tcc_disapprove'),
     url(r'^flag/(?P<comment_id>\d+)/$', 'flag', name='tcc_flag'),
     url(r'^flag/(?P<comment_id>\d+)/$', 'unflag', name='tcc_unflag'),
-)
+    )
+
+urlpatterns += patterns(
+    '',
+    url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
+        {'packages': ['tcc']}, name='tcc_jsi18n'),
+    )

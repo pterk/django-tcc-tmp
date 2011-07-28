@@ -7,6 +7,7 @@ from django.http import (HttpResponseBadRequest, HttpResponseRedirect,
                          HttpResponse, Http404)
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
+from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
@@ -93,9 +94,15 @@ def post(request):
             if not next:
                 next = comment.get_absolute_url()
             return HttpResponseRedirect(next)
-    # ignore?
-    return HttpResponseRedirect(
-        reverse('tcc_index', args=[content_type_id, object_pk]))
+    if request.is_ajax():
+        return HttpResponseBadRequest(simplejson.dumps(form.errors),
+                                      mimetype="application/json")
+    else:
+        # TODO: what to do here?
+        next = data.get('next', None)
+        if not next:
+            next = request.META['HTTP_REFERER']
+        return HttpResponseRedirect(next)
 
 
 @login_required

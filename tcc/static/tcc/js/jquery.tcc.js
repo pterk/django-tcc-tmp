@@ -33,6 +33,19 @@
         }
     };
 
+    function listErrors(frm, errors){
+        if($('ul.errors', frm).length == 0){ 
+            $(frm).prepend('<ul class="errors"/>');
+        }
+        $('ul.errors', frm).empty();
+        $.each(errors, function(field, msgs){
+            $.each(msgs, function(idx, msg){
+                var li = '<li>' + msg + '</li>';
+                $('ul.errors', frm).append(li);
+            });
+        });
+    }
+
     function isScrolledIntoView(elem){
       var docViewTop = $(window).scrollTop();
       var docViewBottom = docViewTop + $(window).height();
@@ -46,7 +59,7 @@
         if(opts.user_name){
             $('.c-user').filter(function(){
                 return $(this).text() == opts.user_name
-            }).text('You');
+            }).text(gettext('You'));
         }
 
         function make_local_time(dte){
@@ -88,19 +101,19 @@
                 switch(true){
                 case n==0:
                     if (is_nowish(dte)) {
-                        humandate = 'Just now';
+                        humandate = gettext('just now');
                     } else {
-                        humandate = 'today';
+                        humandate = gettext('today');
                     }
                     break;
                 case n==1:
-                    humandate = 'yesterday';
+                    humandate = gettext('yesterday');
                     break;
                 case n >1 && n < 7:
-                    humandate = n + ' days ago';
+                    humandate = n + gettext(' days ago');
                     break;
                 case n > 6 && n < 15:
-                    humandate = 'last week';
+                    humandate = gettext('last week');
                     break;
                 default:
                     humandate = date_format(dte);
@@ -128,6 +141,9 @@
                         frm.remove();
                         parent.remove();
                     });
+                    $(frm).ajaxError(function(ev, xhr, req, error_message){
+                        listErrors(frm, $.parseJSON(xhr.responseText));
+                    });
                     return false;
                 });
                 frm.css({'display': 'block'});
@@ -147,6 +163,9 @@
                         if($('ul.replies', parent).length == 0){ $(parent).append('<ul class="replies"/>');}
                         $('ul.replies', parent).append(comment);
                         apply_hooks();
+                    });
+                    $(frm).ajaxError(function(ev, xhr, req, error_message){
+                        listErrors(frm, $.parseJSON(xhr.responseText));
                     });
                     return false;
                 });
@@ -186,13 +205,14 @@
                     var latest = $('ul#tcc li.comment').last();
                     if(!isScrolledIntoView(latest)){
                         $(document).scrollTop($(latest).offset().top-300);
-                    }
-                    
+                    };
+                });
+                $(frm).ajaxError(function(ev, xhr, req, error_message){
+                    listErrors(frm, $.parseJSON(xhr.responseText));
                 });
                 return false;
             });
         }
-
     }
 
 })(jQuery);

@@ -54,5 +54,10 @@ ul, li {
     margin: 1em 0;
 }
 
-
-
+#tcc ul.errors li {
+    margin: 0;
+    margin-top: 10px;
+    padding: 0;
+    color: red;
+    min-height: 0;
+}

@@ -200,10 +200,10 @@
             var frm = $('#tcc form').first();
             $(frm).submit(function(){
                 $.post($(this).attr('action'), $(this).serialize(), function(data){
-                    $('ul#tcc').append(data);
+                    $('ul#tcc li').first().before(data);
                     apply_hooks();
                     $('#id_comment', frm).val('');
-                    var latest = $('ul#tcc li.comment').last();
+                    var latest = $('ul#tcc li.comment').first();
                     if(!isScrolledIntoView(latest)){
                         $(document).scrollTop($(latest).offset().top-300);
                     };

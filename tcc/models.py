@@ -190,11 +190,8 @@ class Comment(models.Model):
         n = replies.count()
         self.childcount = n
         if n == 0:
-            if self.limit:
-                self.limit is None
-            else:
-                return
-        if n < REPLY_LIMIT:
+            self.limit is None
+        elif n < REPLY_LIMIT:
             self.limit = replies[0].submit_date
         else:
             self.limit = replies[REPLY_LIMIT-1].submit_date

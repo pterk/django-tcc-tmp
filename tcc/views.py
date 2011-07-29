@@ -48,7 +48,7 @@ def index(request, content_type_id, object_pk):
         ).extra(select={
             'sortdate': 'CASE WHEN tcc_comment.parent_id is null ' \
                 ' THEN tcc_comment.submit_date ELSE T3.submit_date END'}
-                ).order_by('-sortdate')
+                ).order_by('-sortdate', 'path')
     form = _get_comment_form(content_type_id, object_pk)
     context = RequestContext(request, {'comments': comments, 'form': form })
     return render_to_response('tcc/index.html', context)

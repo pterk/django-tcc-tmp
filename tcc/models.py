@@ -72,7 +72,7 @@ class Comment(models.Model):
     # is_public is rather pointless icw is_removed?
     # Keeping it for compatibility w/ contrib.comments
     is_public = models.BooleanField(_('Public'), default=True)
-    path = models.CharField(_('Path'), max_length=MAX_DEPTH*STEPLEN)
+    path = models.CharField(_('Path'), unique=True, max_length=MAX_DEPTH*STEPLEN)
     limit = models.DateTimeField(
         _('Show replies from'), null=True, blank=True)
     # denormalized cache
@@ -86,7 +86,7 @@ class Comment(models.Model):
     disapproved = DisapprovedCommentManager()
 
     class Meta:
-        ordering = ['path', 'submit_date']
+        ordering = ['path']
 
     def __unicode__(self):
         return u"%05d %s % 8s: %s" % (
@@ -119,7 +119,7 @@ class Comment(models.Model):
             replies = Comment.objects.filter(path__startswith=self.path)
             if levels:
                 # 'z' is the highest value in base36 (as implemented in django)
-                replies.filter(path__lte="%s%s" % (self.path, (levels * STEPLEN * 'z')))
+                replies = replies.filter(path__lte="%s%s" % (self.path, (levels * STEPLEN * 'z')))
             if not include_self:
                 replies = replies.exclude(id=self.id)
             return replies
@@ -190,7 +190,10 @@ class Comment(models.Model):
         n = replies.count()
         self.childcount = n
         if n == 0:
-            return
+            if self.limit:
+                self.limit is None
+            else:
+                return
         if n < REPLY_LIMIT:
             self.limit = replies[0].submit_date
         else:

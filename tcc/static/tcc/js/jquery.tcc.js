@@ -183,6 +183,7 @@
         // showall is enable for everyone
         $('a.showall').click(function(){
             var parent = $(this).parent();
+            if($('ul.replies', parent).length == 0){ $(parent).append('<ul class="replies"/>');}
             var ul = $('ul.replies', parent).first();
             $.get($(this).attr('href'), function(data){
                 $(ul).html(data);

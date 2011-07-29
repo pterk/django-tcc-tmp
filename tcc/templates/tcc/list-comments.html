@@ -1,31 +1,27 @@
-{% macro paginator(paginator) -%}
-{% if paginator.pages > 1 %}
-    {% macro _page(page, pk, text=None) -%}
-        <a {% if paginator.page == page %}class="selected"{% endif %} href="{{ paginator.get_link(page, None) }}">{{ text|default(page)|safe }}</a>
-    {% endmacro %}
+{% macro paginator(pages) -%}
 
+{% if pages.is_paginated %}
 <div class="pagination">
-    <!--{% trans %}previous{% endtrans %}-->
-    {% if paginator.previous %}{{ _page(paginator.previous[0], paginator.previous[1], '&laquo; ' + 'previous') }}{% endif %}
 
-    {% if paginator.left %}
-        {% for page, pk in paginator.left %}{{ _page(page, pk) }}{% endfor %}
-        . . .
-    {% endif %}
+  {% if pages.page_obj.has_previous() %}
+  <a href="?page={{ pages.page_obj.previous_page_number() }}{{ pages.getvars }}{{ pages.hashtag }}" class="prev">&lsaquo;&lsaquo; {% trans %}previous{% endtrans %}</a>
+  {% endif %}
 
-    {% for page, pk in paginator.middle %}{{ _page(page, pk) }}{% endfor %}
+  {% for page in pages.pages %}
+  {% if page %}
+  <a href="?page={{ page }}{{ pages.getvars }}{{ pages.hashtag }}"{% if page == pages.page_obj.number %} class="selected"{% endif %}>{{ page }}</a>
+  {% else %}
+  ...
+  {% endif %}
+  {% endfor %}
 
-    {# Disabled to keep people from jumping to the end. Reduces load quite a lot
-    {% if paginator.right %}
-        . . .
-        {% for page, pk in paginator.right %}{{ _page(page, pk) }}{% endfor %}
-    {% endif %}
-    #}
+  {% if pages.page_obj.has_next() %}
+  <a href="?page={{ pages.page_obj.next_page_number() }}{{ pages.getvars }}{{ pages.hashtag }}" class="next">{% trans %}next{% endtrans %} &rsaquo;&rsaquo;</a>
+  {% endif %}
 
-    <!--{% trans %}next{% endtrans %}-->
-    {% if paginator.next %}{{ _page(paginator.next[0], paginator.next[1], 'next' + ' &raquo;') }}{% endif %}
 </div>
 {% endif %}
+
 {%- endmacro %}
 
 <ul id="tcc">
@@ -51,9 +47,9 @@
   </div>
   {% endif %}
 
+  {% autopaginate comments as cs %}
 
-  {% with comment_paginator = SmartQuerySetPaginator(comments, request.GET, 9, 'c') %}
-  {% for c in comment_paginator.get_objects() %}
+  {% for c in cs %}
 
   {% if prev == None and c.parent %}
      {% continue %}
@@ -110,10 +106,8 @@
   {% set prev = c %}
 
   {% endfor %}
-
-  {{ paginator(comment_paginator) }}
-
-  {% endwith %}
+  
+  {{ paginator(cs_pages) }}
 
   <form class="remove-form" action="" method="post" style="display:none">
     {% csrf_token %}

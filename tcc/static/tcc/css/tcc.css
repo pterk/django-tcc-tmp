@@ -66,13 +66,17 @@ ul, li {
     text-align: center;
 }
 
+#tcc .pagination .disabled {
+    display: none;
+}
+
 #tcc .pagination a {
     background-color: #dddddd;
     color: #222222;
     padding: 1px 4px;
 }
 
-#tcc .pagination a.selected {
+#tcc .pagination a.selected, #tcc .pagination a:hover {
     background-color: #999999;
     color: #ffffff;
 }

@@ -1,13 +1,12 @@
 from django.conf.urls.defaults import *
 
-# URL patterns for tcc
 
 urlpatterns = patterns(
     'tcc.views',
     url(r'^(?P<content_type_id>\d+)/(?P<object_pk>\d+)/$', 'index',
         name='tcc_index'),
     url(r'^replies/(?P<parent_id>\d+)/$', 'replies', name='tcc_replies'),
-    url(r'^thread/(?P<comment_id>\d+)/$', 'thread', name='tcc_thread'),
+    url(r'^thread/(?P<thread_id>\d+)/$', 'thread', name='tcc_thread'),
     url(r'^post/$', 'post', name='tcc_post'),
     url(r'^remove/(?P<comment_id>\d+)/$', 'remove', name='tcc_remove'),
     url(r'^restore/(?P<comment_id>\d+)/$', 'restore', name='tcc_restore'),

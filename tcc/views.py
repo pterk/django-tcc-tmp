@@ -57,11 +57,14 @@ def index(request, content_type_id, object_pk):
 def replies(request, parent_id):
     comments = api.get_comment_replies(parent_id)
     context = RequestContext(request, {'comments': comments})
-    return render_to_response('tcc/thread.html', context)
+    return render_to_response('tcc/replies.html', context)
 
 
-def thread(request, comment_id):
-    comments = api.get_comment_thread(comment_id)
+def thread(request, thread_id):
+    # thead_id here should be the root_id of the thread (even though
+    # any comment_id will work) so the entire thread can cached *and*
+    # invalidated with one entry
+    comments = api.get_comment_thread(thread_id)
     if not comments:
         raise Http404()
     rootcomment = comments[0]

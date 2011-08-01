@@ -108,6 +108,15 @@ class Comment(models.Model):
     def get_root_path(self):
         return self.path[0:STEPLEN]
 
+    # The following two methods may seem superfluous and/or convoluted
+    # but they get the root.id of any 'node' without hitting the
+    # database (again)
+    def get_root_id(self):
+        return base36_to_int(self.get_root_path())
+
+    def get_root_base36(self):
+        return int_to_base36(self.get_root_id())
+
     def get_thread(self):
         """ returns the entire 'thread' (a 'root' comment and all replies)
 

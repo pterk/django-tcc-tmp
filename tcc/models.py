@@ -102,6 +102,8 @@ class Comment(models.Model):
         if self.parent:
             if not self.pk and self.parent.childcount >= self.MAX_REPLIES:
                 raise ValidationError(_('Maximum number of replies reached'))
+        if self.comment <> "" and striptags(self.comment).strip() == "":
+            raise ValidationError(_("This field is required."))
 
     def get_root_path(self):
         return self.path[0:STEPLEN]

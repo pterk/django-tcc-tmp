@@ -9,14 +9,14 @@
 
   {% for page in pages.pages %}
   {% if page %}
-  <a href="?page={{ page }}{{ pages.getvars }}{{ pages.hashtag }}"{% if page == pages.page_obj.number %} class="selected"{% endif %}>{{ page }}</a>
+  <a href="?{{ pages.prefix }}page={{ page }}{{ pages.getvars }}{{ pages.hashtag }}"{% if page == pages.page_obj.number %} class="selected"{% endif %}>{{ page }}</a>
   {% else %}
   ...
   {% endif %}
   {% endfor %}
 
   {% if pages.page_obj.has_next() %}
-  <a href="?page={{ pages.page_obj.next_page_number() }}{{ pages.getvars }}{{ pages.hashtag }}" class="next">{% trans %}next{% endtrans %} &rsaquo;&rsaquo;</a>
+  <a href="?{{ pages.prefix }}page={{ pages.page_obj.next_page_number() }}{{ pages.getvars }}{{ pages.hashtag }}" class="next">{% trans %}next{% endtrans %} &rsaquo;&rsaquo;</a>
   {% endif %}
 
 </div>
@@ -47,7 +47,7 @@
   </div>
   {% endif %}
 
-  {% autopaginate comments as cs %}
+  {% autopaginate comments as cs prefix='c', per_page=21, orphans=3  %}
 
   {% for c in cs %}
 

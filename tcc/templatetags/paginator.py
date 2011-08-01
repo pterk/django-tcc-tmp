@@ -3,7 +3,6 @@ try:
 except NameError:
     from sets import Set as set
 
-from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404
 
@@ -12,17 +11,12 @@ from jinja2 import nodes
 from jinja2.ext import Extension
 from jinja2.exceptions import TemplateSyntaxError
 
+from tcc import settings
 
 register = template.Library()
 
 # Most of the code below is borrowed from the django_pagination module by James Tauber and Pinax Team,
 # http://pinaxproject.com/docs/dev/external/pagination/index.html
-
-DEFAULT_PAGINATION = getattr(settings, 'PAGINATION_DEFAULT_PAGINATION', 10)
-DEFAULT_WINDOW = getattr(settings, 'PAGINATION_DEFAULT_WINDOW', 4)
-DEFAULT_ORPHANS = getattr(settings, 'PAGINATION_DEFAULT_ORPHANS', 0)
-INVALID_PAGE_RAISES_404 = getattr(settings,
-    'PAGINATION_INVALID_PAGE_RAISES_404', True)
 
 
 class AutopaginateExtension(Extension):
@@ -39,24 +33,45 @@ class AutopaginateExtension(Extension):
         original name of the dataset or ctx_variable
     """
     tags = set(['autopaginate'])
- 
+    default_kwargs = {
+        'per_page': settings.PER_PAGE,
+        'orphans': settings.PAGE_ORPHANS,
+        'window': settings.PAGE_WINDOW,
+        'hashtag': '',
+        'prefix': '',
+        }
+
     def parse(self, parser):
         lineno = parser.stream.next().lineno
-        value = parser.parse_expression()
-
+        object_list = parser.parse_expression()
         if parser.stream.skip_if('name:as'):
             name = parser.stream.expect('name').value
-        elif hasattr(value, 'name'):
-            name = value.name
+        elif hasattr(object_list, 'name'):
+            name = object_list.name
         else:
             raise TemplateSyntaxError("Cannot determine the name of objects you want to paginate, use 'as foobar' syntax", lineno)
 
-        while not parser.stream.current.type == 'block_end':
-            parser.stream.skip()
-            
+
+        kwargs = [] # wait... what?
+        loops = 0
+        while parser.stream.current.type != 'block_end':
+            lineno = parser.stream.current.lineno
+            if loops:
+                parser.stream.expect('comma')
+            key = parser.parse_assign_target().name
+            if key not in self.default_kwargs.keys():
+                raise TemplateSyntaxError(
+                    "Unknown keyword argument for autopaginate. Your options are: %s" % (
+                        ", ".join(self.default_kwargs.keys())
+                        ))
+            parser.stream.expect('assign')
+            value = parser.parse_expression()
+            kwargs.append(nodes.Keyword(key, value)) #.set_lineno(lineno)) # like so?
+            loops += 1
+
         return [
             nodes.Assign(nodes.Name(name + '_pages', 'store'), 
-                self.call_method('_render_pages', [value, nodes.Name('request', 'load')])
+                         self.call_method('_render_pages', [object_list, nodes.Name('request', 'load')], kwargs)
             ).set_lineno(lineno),
 
             nodes.Assign(nodes.Name(name, 'store'), 
@@ -64,19 +79,26 @@ class AutopaginateExtension(Extension):
             ).set_lineno(lineno),
         ]
         
-    def _render_pages(self, objs, request, window=DEFAULT_WINDOW, hashtag=''):
+    def _render_pages(self, objs, request, **kwargs):
+        mykwargs = self.default_kwargs.copy()
+        mykwargs.update(kwargs)
+        prefix = mykwargs.pop('prefix')
+        window = mykwargs.pop('window')
+        hashtag = mykwargs.pop('hashtag')
         try:
-            paginator = Paginator(objs, DEFAULT_PAGINATION)
+            paginator = Paginator(objs, **mykwargs)
 
+            key = 'page'
+            if prefix:
+                key = prefix + key
             try:
                 try:
-                    pageno = int(request.GET['page'])
+                    pageno = int(request.GET[key])
                 except (KeyError, ValueError, TypeError):
                     pageno = 1
                 page_obj = paginator.page(pageno)
             except InvalidPage:
-                if INVALID_PAGE_RAISES_404:
-                    raise Http404('Invalid page requested.  If DEBUG were set to ' +
+                raise Http404('Invalid page requested.  If DEBUG were set to ' +
                         'False, an HTTP 404 page would have been shown instead.')
 
             page_range = paginator.page_range
@@ -151,19 +173,19 @@ class AutopaginateExtension(Extension):
                 differenced.sort()
                 pages.extend(differenced)
             to_return = {
-                'MEDIA_URL': settings.MEDIA_URL,
                 'pages': pages,
                 'records': records,
                 'page_obj': page_obj,
+                'prefix': prefix,
                 'object_list': page_obj.object_list,
                 'paginator': paginator,
                 'hashtag': hashtag,
-                'is_paginated': paginator.count > paginator.per_page,
+                'is_paginated': paginator.count > (paginator.per_page + paginator.orphans),
             }
 
             getvars = request.GET.copy()
-            if 'page' in getvars:
-                del getvars['page']
+            if key  in getvars:
+                del getvars[key]
             if len(getvars.keys()) > 0:
                 to_return['getvars'] = "&%s" % getvars.urlencode()
             else:

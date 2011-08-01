@@ -6,15 +6,16 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, get_callable
 from django.db import models
+from django.template.defaultfilters import striptags
 from django.utils.http import base36_to_int, int_to_base36
 from django.utils.translation import ugettext_lazy as _
 
-from tcc import tasks
-from tcc.settings import (STEPLEN, COMMENT_MAX_LENGTH, MODERATED,
-                          REPLY_LIMIT, CONTENT_TYPES, MAX_DEPTH,
-                          PRE_SAVE_CALLBACK, ADMIN_CALLBACK, MAX_REPLIES)
+from tcc.settings import (
+    STEPLEN, COMMENT_MAX_LENGTH, MODERATED, REPLY_LIMIT, CONTENT_TYPES,
+    MAX_DEPTH, MAX_REPLIES, ADMIN_CALLBACK
+    )
 from tcc.managers import (
     CurrentCommentManager, LimitedCurrentCommentManager,
     RemovedCommentManager, DisapprovedCommentManager,
@@ -151,33 +152,21 @@ class Comment(models.Model):
         return not getattr(self, field) == old_value
 
     def save(self, *args, **kwargs):
+
         if self.id:
-            must_send_notifications = False
-            must_set_path = False
-
-            if self.has_changed('is_removed'):
-                self.get_replies().update(is_removed=False)
-
+            is_new = False
         else:
-            must_set_path = True
-            must_send_notifications = True
-            
-            self.comment_raw = self.comment
-            self.comment = PRE_SAVE_CALLBACK(self.comment)
+            is_new = True
+
+        self.clean()
 
         super(Comment, self).save(*args, **kwargs)
 
-        if REPLY_LIMIT and self.parent:
-            self.parent.set_limit()
-
-        if must_set_path:
+        if is_new:
             self._set_path()
 
-        if must_send_notifications:
-            tasks.send_notifications.delay(self.id)
-
-        tasks.spam_check.delay(self.id)
-        tasks.prime_cache.delay(self.id)
+        if REPLY_LIMIT and self.parent:
+            self.parent.set_limit()
 
     def delete(self, *args, **kwargs):
         self.get_replies(include_self=True).delete()
@@ -233,7 +222,7 @@ class Comment(models.Model):
         >>> 2**31 / 1000 / 1000
         2147
 
-        So 2**31 is enough for 1 million (1.000.000) comments daily for almost 6 (5.88) years 
+        So 2**31 is enough for 1 million (1.000.000) comments daily for almost 6 (5.88) years
 
         If you really need more check out django's BigIntegerField
 
@@ -249,9 +238,12 @@ class Comment(models.Model):
         self.depth = self.get_depth()
 
         self.save()
-    
+
     def get_enabled_users(self, action):
+        if not callable(ADMIN_CALLBACK):
+            return []
         assert action in ['open', 'close', 'remove', 'restore',
                           'approve', 'disapprove']
-        return ADMIN_CALLBACK(self, action)
+        func = get_callable(ADMIN_CALLBACK)
+        return func(self, action)
 

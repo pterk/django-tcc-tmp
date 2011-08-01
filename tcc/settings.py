@@ -2,19 +2,22 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 
-from tcc.utils import process_comment, admin_callback
-
-COMMENT_MAX_LENGTH = getattr(settings,'COMMENT_MAX_LENGTH',3000)
-MODERATED = getattr(settings, 'TCC_MODERATE', False)
+# Tree related
 MAX_DEPTH = getattr(settings, 'TCC_MAX_DEPTH', 2)
 REPLY_LIMIT = getattr(settings, 'TCC_REPLY_LIMIT', 3)
-MAX_REPLIES = getattr(settings, 'TCC_MAX_REPLIES', 5)
+MAX_REPLIES = getattr(settings, 'TCC_MAX_REPLIES', 50)
 STEPLEN = getattr(settings, 'TCC_STEPLEN', 6)
+# paginator stuff
+PER_PAGE = getattr(settings, 'PER_PAGE', 25)
+PAGE_WINDOW = getattr(settings, 'PAGE_WINDOW', 3)
+PAGE_ORPHANS = getattr(settings, 'PAGE_ORPHANS', REPLY_LIMIT+1)
+# special perms
+ADMIN_CALLBACK = getattr(settings, 'TCC_ADMIN_CALLBACK', None)
+# comment related
+COMMENT_MAX_LENGTH = getattr(settings,'COMMENT_MAX_LENGTH',3000)
+MODERATED = getattr(settings, 'TCC_MODERATE', False)
 TCC_CONTENT_TYPES = getattr(settings, 'TCC_CONTENT_TYPES', [])
-PRE_SAVE_CALLBACK = getattr(settings, 'TCC_PRE_SAVE_CALLBACK', process_comment)
-ADMIN_CALLBACK = getattr(settings, 'TCC_ADMIN_CALLBACK', admin_callback)
 CONTENT_TYPES = []
-
 if connection.introspection.table_names() != []:
     # syncdb has run -- can now assume django_content_type table exists
     for label in TCC_CONTENT_TYPES:

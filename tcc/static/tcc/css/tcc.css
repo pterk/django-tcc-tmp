@@ -10,13 +10,14 @@ ul, li {
     padding-top: 10px;
     padding-left: 75px;
     position: relative;
-    min-height: 48px;
+    min-height: 60px;
 }
 
 #tcc .replies li {
     background-color: #fafafa;
     margin-top: .5em;
     padding: 10px 0 4px 60px;
+    min-height: 47px;
 }
 
 #tcc .comment {
@@ -79,4 +80,10 @@ ul, li {
 #tcc .pagination a.selected, #tcc .pagination a:hover {
     background-color: #999999;
     color: #ffffff;
+}
+
+#tcc li.highlight {
+    border-top: 2px solid red;
+    border-bottom: 2px solid red;
+    background-color: #ffdddd;
 }

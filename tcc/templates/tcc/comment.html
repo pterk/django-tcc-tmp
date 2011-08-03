@@ -1,7 +1,5 @@
 <li class="comment user-{{ c.user_id }}">
-  <a name="{{ c.get_base36() }}" href="{% url profiles_profile_detail c.user.username %}" rel="nofollow">
-    <img width="{% if c.parent %}40{% else %}50{% endif %}" src="http://e.fashiocdn.com/images/no-image.50x50.png" alt="{{ c.user.username }}">
-  </a>
+  <a name="{{ c.get_base36() }}"></a>
   {{ c.comment|safe }}
   <p class="info">
     {% trans %}by{% endtrans %} <a class="c-user" href="#">{{ c.user }}</a>
@@ -15,7 +13,6 @@
     <span class="comment-remove comment-remove-{{ c.user.id }}{% for u in c.get_enabled_users('remove') %} comment-remove-{{ u.id }}{% endfor %}" style="display:none">
       | <a href="{% url tcc_remove c.id %}" title="{% trans %}remove{% endtrans %}">{% trans %}remove{% endtrans %}</a>
     </span>
-    | <a href="{% url tcc_thread c.get_root_id() %}#{{ c.get_base36() }}" title="permalink">#</a>
   </p>
   {#
   The following construction will close the li if doclose is NOT set (a reasonable default)
